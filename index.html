@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EIGHTRAD - IMT HOLDING</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            height: 100vh;
+            color: #b6b6b6;
+            overflow: hidden;
+            display: flex; /* Enable flexbox layout for centering */
+            justify-content: center; /* Center horizontally */
+            align-items: center;    /* Center vertically */
+        }
+
+        .bg-container {  /* New container for background and blur */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg {
+            background-image: url("https://eightrad.com/img/bg.png");
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            position: absolute; /* Absolute positioning within container */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .bg-blur {  /* Div for the blurred background */
+            background-image: url("https://eightrad.com/img/bg.png");
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            position: absolute; /* Absolute positioning within container */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            filter: url(#radialBlur);
+            background-color: rgba(139, 143, 87, 0.7);
+            mix-blend-mode: multiply; /* Multiply blend mode on blurred image */
+        }
+
+
+        video {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            margin: auto;
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <div class="bg-container">
+        <div class="bg"></div>              <!-- Original background -->
+        <div class="bg-blur"></div>          <!-- Blurred background on top -->
+    </div>
+
+    <video id="eightrad" autoplay loop muted playsinline>
+        <source src="https://eightrad.com/img/Render-Black.webm" type="video/webm">
+        Your browser doesn't support HTML5 video.
+    </video>
+
+
+    <svg style="display: none;">
+        <filter id="radialBlur" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blurred"/>
+            <feComposite in="blurred" in2="SourceGraphic" operator="over"/>
+        </filter>
+    </svg>
+
+    <script>
+        let vid = document.getElementById("eightrad");
+        vid.playbackRate = 0.85;
+    </script>
+
+</body>
+</html>
