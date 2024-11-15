@@ -1,12 +1,14 @@
 # Dockerfile
-
-FROM python:3.9-slim-buster
+FROM python:3.12-rc-slim-buster
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+COPY app/ .
 
-COPY . .
+RUN pip install --upgrade pip
 
+RUN pip install setuptools
+
+RUN pip install flask
+ 
 CMD ["python", "app.py"]

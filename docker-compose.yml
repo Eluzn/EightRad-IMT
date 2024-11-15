@@ -1,0 +1,35 @@
+version: "3.12-rc"  # Or latest
+services:
+  flask_app:
+    build: . # Your current Dockerfile builds the Flask app
+    environment:
+      - VIRTUAL_HOST=imt.eightrad.com # Your domain, matching nginx.conf
+      - VIRTUAL_PORT=5000 # The port Flask listens on
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80" # Required for HTTP challenges
+      - "443:443" # HTTPS port
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - certs:/etc/nginx/certs:ro # Mount the volume for certs
+      # - ./vhost.d:/etc/nginx/vhost.d  # If you have custom vhost config
+      # - ./html:/usr/share/nginx/html  # Optional: for custom error pages or maintenance
+      # - ./certs:/etc/nginx/certs:ro #If you intend to mount existing certs
+
+  letsencrypt-nginx-proxy-companion:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certs:/etc/nginx/certs:rw # Need write access for cert creation
+      # - ./vhost.d:/etc/nginx/vhost.d  # IF using custom vhost config
+      # - ./html:/usr/share/nginx/html   # Optional: for custom error pages or maintenance
+    environment:
+      - NGINX_DOCKER_GEN_CONTAINER=nginx-proxy
+      - NGINX_PROXY_CONTAINER=nginx-proxy
+    depends_on:
+      - nginx-proxy
+
+volumes:
+  certs: # Named volume to persist certificates across containers
