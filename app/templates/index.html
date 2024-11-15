@@ -1,0 +1,249 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+<title>Message Board</title>
+<!-- ... (other head content, including CSS) -->
+ <style>
+    body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            height: 100vh;
+            color: #b6b6b6;
+            overflow: hidden;
+            display: flex; /* Enable flexbox layout for centering */
+            justify-content: center; /* Center horizontally */
+            align-items: center;    /* Center vertically */
+        }
+
+        .bg-container {  /* New container for background and blur */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg {
+            background-image: url("https://eightrad.com/img/bg.png");
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            position: absolute; /* Absolute positioning within container */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .bg-blur {  /* Div for the blurred background */
+            background-image: url("https://eightrad.com/img/bg.png");
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            position: absolute; /* Absolute positioning within container */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            filter: url(#radialBlur);
+            background-color: rgba(139, 143, 87, 0.7);
+            mix-blend-mode: multiply; /* Multiply blend mode on blurred image */
+        }
+        #new-message-form {
+            display: flex;               /* Enable flexbox for form */
+            flex-direction: column;    /* Stack items vertically */
+            align-items: center;        /* Center items horizontally */
+            margin-top: 20px;
+        }
+        .message {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+            margin-bottom: 10px;
+            position: relative; /* Allow positioning of delete buttons within message */
+        }
+        .delete-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+        }
+        .message:hover .delete-button { /* Show on hover if moderator */
+            display: block;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: auto;
+            margin-top: 10px;
+        }
+        #message-board {
+            max-height: 600px;
+            width: 70%;      /* Set a maximum height */
+            overflow-y: auto;       /* Enable vertical scrolling */
+            /* ... other message board styles */
+        }
+
+        #message-container {
+            display: flex;               /* Enable flexbox for form */
+            flex-direction: column;    /* Stack items vertically */
+            align-items: center;        /* Center items horizontally */
+            width: 80%; /* Set appropriate width for alignment */
+            margin: 20px auto; /* Add some margin around */
+        }
+
+        #new-message-form {
+            margin-top: 20px;       /* Add some spacing */
+            width: 100%; /* Set to full width */
+            display: flex; /* Use flexbox */
+            flex-direction: column; /* Align items vertically */
+            align-items: center; /* Center items horizontally */
+        }
+                
+ </style>
+
+</head>
+<body>
+
+    <div class="bg-container">
+        <div class="bg"></div>              <!-- Original background -->
+        <div class="bg-blur"></div>          <!-- Blurred background on top -->
+    </div>
+
+    <svg style="display: none;">
+        <filter id="radialBlur" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blurred"/>
+            <feComposite in="blurred" in2="SourceGraphic" operator="over"/>
+        </filter>
+    </svg>
+
+
+  <div id="message-container" style="display: flex; flex-direction: column; align-items: center;">
+    <div id="message-board">
+        {% for message in messages %}
+          <div class="message">
+            {{ message.formattedTimestamp }} - {{ message.nickname }}: {{ message.message }}
+            <button class="delete-button" data-message-id="{{ message.id }}">Delete</button>
+          </div>
+        {% endfor %}
+    </div>
+    <div id="new-message-form">
+        <textarea id="message-text" placeholder="Enter your message"></textarea><br>
+        <button onclick="postMessage()">Post Message</button>
+    </div>
+</div>
+
+  <script>
+        // ... (JavaScript, updated to use AJAX and handle delete buttons) ...
+        const messageBoard = document.getElementById('message-board');
+        const messageText = document.getElementById('message-text');
+      
+        // Check for existing nickname cookie
+        let nickname = document.cookie.replace(/(?:(?:^|.*;\s*)nickname\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+
+        // Prompt for nickname if not set
+        if (!nickname) {
+            nickname = prompt("Please enter a nickname:", "");
+            if (nickname) {  // Set cookie if a nickname was entered
+            document.cookie = `nickname=${nickname};path=/`;  // Path=/ for the entire site
+            }
+        }
+
+        function postMessage() {
+            const message = messageText.value.trim();
+            if (message !== "" && nickname) {  // Check for nickname
+                // Include nickname in the POST request
+                fetch('/post', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `message=${encodeURIComponent(message)}&nickname=${encodeURIComponent(nickname)}` 
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        messageText.value = "";
+                        // Refresh the message board (you can use AJAX to fetch and update partially, or reload the page)
+                        location.reload(); // Simpler approach for this example
+                    }
+                });
+            } else if (!nickname) {
+                alert("Please enter a nickname before posting."); // Notify user to set nickname
+            }
+        }
+
+        function renderMessages() {
+            messages.forEach(msg => {  // msg now has nickname, message, and timestamp
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                const timestamp = new Date(msg.timestamp);
+                const day = String(timestamp.getDate()).padStart(2, '0');         // Pad with leading zero
+                const month = String(timestamp.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+                const year = String(timestamp.getFullYear()).slice(-2);       // Get last two digits of year
+                const hours = String(timestamp.getHours()).padStart(2, '0');
+                const minutes = String(timestamp.getMinutes()).padStart(2, '0');
+                const formattedTimestamp = `${day}/${month}/${year} ${hours}:${minutes}`;
+
+                messageDiv.innerHTML = `<span class="nickname">${msg.nickname}</span>: ${msg.message} <span class="timestamp">${formattedTimestamp}</span>`; //Use formatted timestamp
+                
+                // Add delete button (only visible with moderator key)
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'delete-button';
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteMessage(index);
+
+                // Check for moderator key in local storage or a cookie
+                if (localStorage.getItem(moderatorKey) || document.cookie.includes(moderatorKey)) {
+                    messageDiv.appendChild(deleteButton);
+                }
+
+                messageBoard.appendChild(messageDiv);
+            });
+        }
+
+        messageBoard.addEventListener('click', (event) => {
+                    if (event.target.classList.contains('delete-button')) {
+                        const messageId = event.target.dataset.messageId;
+                        fetch(`/delete/${messageId}`, { method: 'POST' })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                location.reload(); // Refresh after delete
+                            }
+                        });
+                    }
+                });
+
+        function deleteMessage(index) {
+            messages.splice(index, 1);
+            renderMessages();
+        }
+
+        // Initial rendering (if there are messages already)
+        renderMessages();
+  </script>
+</body>
+</html>
